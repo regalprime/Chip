@@ -1,0 +1,26 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug common_packages",
+      "request": "launch",
+      "type": "dart",
+      "program": "common_packages/lib/main.dart",
+      "cwd": "common_packages"
+    },
+    {
+      "name": "Debug development",
+      "request": "launch",
+      "type": "dart",
+      "program": "development/lib/main.dart",
+      "cwd": "development"
+    },
+    {
+      "name": "Debug production",
+      "request": "launch",
+      "type": "dart",
+      "program": "production/lib/main.dart",
+      "cwd": "production"
+    }
+  ]
+}

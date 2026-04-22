@@ -1,0 +1,89 @@
+{
+  "@@locale": "vi",
+
+  "name": "My Chip",
+  "@name": {
+    "description": "Tên ứng dụng"
+  },
+
+  "language": "Tiếng Việt",
+  "@language": {
+    "description": "Ngôn ngữ hiện tại đang được sử dụng"
+  },
+
+  "languageEnglish": "Tiếng Anh",
+  "@languageEnglish": {
+    "description": "Nhãn cho ngôn ngữ tiếng Anh"
+  },
+
+  "languageVietnamese": "Tiếng Việt",
+  "@languageVietnamese": {
+    "description": "Nhãn cho ngôn ngữ tiếng Việt"
+  },
+
+  "color": "Màu sắc",
+  "@color": {
+    "description": "Nhãn cho lựa chọn màu hoặc chủ đề màu"
+  },
+
+  "setting": "Cài đặt",
+  "@setting": {
+    "description": "Nhãn cho màn hình hoặc menu cài đặt"
+  },
+
+  "changeLanguage": "Thay đổi ngôn ngữ",
+  "@changeLanguage": {
+    "description": "Nút hoặc tùy chọn để thay đổi ngôn ngữ của ứng dụng"
+  },
+
+  "toggleDarkMode": "Bật/Tắt chế độ tối",
+  "@toggleDarkMode": {
+    "description": "Nút hoặc tùy chọn để bật hoặc tắt chế độ tối"
+  },
+
+  "titleDayCounter": "Đếm ngày chúng ta đã yêu nhau",
+  "@titleDayCounter": {
+    "description": "Tiêu đề cho chức năng đếm ngày"
+  },
+
+  "contentDayCounter": "ngày chúng ta đã yêu nhau, từ lúc",
+
+  "pickADate": "Chọn ngày",
+
+  "clearData": "Xoá dữ liệu",
+
+  "dayCounterMessage": "Đã được {days} ngày kể từ {date}.",
+  "@dayCounterMessage": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "milestoneReached": "Đã đạt {target} ngày!",
+  "@milestoneReached": {
+    "placeholders": {
+      "target": {
+        "type": "int"
+      }
+    }
+  },
+
+  "milestoneRemaining": "Còn {remaining} ngày nữa để đạt {target} ngày",
+  "@milestoneRemaining": {
+    "placeholders": {
+      "remaining": {
+        "type": "int"
+      },
+      "target": {
+        "type": "int"
+      }
+    }
+  },
+
+  "signOut": "Đăng xuất",
+  "profile": "Hồ sơ"
+}

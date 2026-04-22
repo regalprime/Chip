@@ -1,0 +1,3 @@
+class FirebaseDataSource {
+  const FirebaseDataSource();
+}

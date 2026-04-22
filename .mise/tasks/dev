@@ -1,0 +1,2 @@
+cd development
+flutter run --target=lib/main.dart

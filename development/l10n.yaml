@@ -1,0 +1,5 @@
+arb-dir: ../common_packages/lib/base/languages/l10n
+template-arb-file: app_en.arb
+output-localization-file: app_localizations.dart
+output-dir: ../common_packages/lib/base/languages/l10n/gen
+synthetic-package: false

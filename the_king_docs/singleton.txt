@@ -1,0 +1,4 @@
+singleton giúp khởi tạo biến duy nhất
+tránh các biến tạo các giá trị khác nhau
+singleton = 1 instance duy nhất suốt vòng đời ứng dụng
+gọi bao nhiêu lần thì cũng nhận về 1 object chung

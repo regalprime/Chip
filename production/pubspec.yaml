@@ -1,0 +1,44 @@
+name: production
+description: Production app
+publish_to: 'none'
+
+environment:
+  sdk: ^3.7.0
+  flutter: ">=3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  common_packages:
+    path: ../common_packages
+  firebase_core: ^3.15.1
+  get_it: ^8.2.0
+  supabase_flutter: ^2.10.1
+  flutter_bloc: ^9.1.1
+  image_picker: ^1.2.1
+  phosphor_flutter: ^2.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/font/
+
+  fonts:
+    - family: Tinos
+      fonts:
+        - asset: assets/font/Tinos-Regular.ttf
+          weight: 400
+        - asset: assets/font/Tinos-Italic.ttf
+          weight: 400
+          style: italic
+        - asset: assets/font/Tinos-Bold.ttf
+          weight: 700
+        - asset: assets/font/Tinos-BoldItalic.ttf
+          weight: 700
+          style: italic
+

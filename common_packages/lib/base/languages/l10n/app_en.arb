@@ -1,0 +1,89 @@
+{
+  "@@locale": "en",
+
+  "name": "My Chip",
+  "@name": {
+    "description": "The application name"
+  },
+
+  "language": "English",
+  "@language": {
+    "description": "The current language being used"
+  },
+
+  "languageEnglish": "English",
+  "@languageEnglish": {
+    "description": "Label for the English language"
+  },
+
+  "languageVietnamese": "Vietnamese",
+  "@languageVietnamese": {
+    "description": "Label for the Vietnamese language"
+  },
+
+  "color": "Color",
+  "@color": {
+    "description": "Label for color selection or color theme"
+  },
+
+  "setting": "Settings",
+  "@setting": {
+    "description": "Label for the settings screen or menu"
+  },
+
+  "changeLanguage": "Change language",
+  "@changeLanguage": {
+    "description": "Button or option to change the app's language"
+  },
+
+  "toggleDarkMode": "Toggle dark mode",
+  "@toggleDarkMode": {
+    "description": "Button or option to enable or disable dark mode"
+  },
+
+  "titleDayCounter": "Counting the days we've been in love",
+  "@titleDayCounter": {
+    "description": "Title for the day counter feature"
+  },
+
+  "contentDayCounter": "days we've been in love, since",
+
+  "pickADate": "Pick a date",
+
+  "clearData": "Clear data",
+
+  "dayCounterMessage": "{days} days since {date}.",
+  "@dayCounterMessage": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "milestoneReached": "Reached {target} days!",
+  "@milestoneReached": {
+    "placeholders": {
+      "target": {
+        "type": "int"
+      }
+    }
+  },
+
+  "milestoneRemaining": "{remaining} days left to reach {target} days",
+  "@milestoneRemaining": {
+    "placeholders": {
+      "remaining": {
+        "type": "int"
+      },
+      "target": {
+        "type": "int"
+      }
+    }
+  },
+
+  "signOut": "Sign Out",
+  "profile": "Profile"
+}

@@ -1,0 +1,237 @@
+// ============================================================
+// THEME GUIDE - Cách sử dụng Theme trong The King App
+// ============================================================
+// File này là tài liệu hướng dẫn, KHÔNG phải code chạy thật.
+// Copy các pattern bên dưới vào widget của bạn.
+// ============================================================
+
+import 'package:common_packages/base/extensions/context_extension.dart';
+import 'package:flutter/material.dart';
+
+// ┌─────────────────────────────────────────────────────────┐
+// │  1. CÁCH TRUY CẬP MÀU TRONG WIDGET                     │
+// └─────────────────────────────────────────────────────────┘
+
+class Example1_ColorAccess extends StatelessWidget {
+  const Example1_ColorAccess({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    // ── Cách 1: Dùng context extension (KHUYẾN KHÍCH) ──
+    final primary = context.primaryColor;        // Màu chủ đạo (đỏ)
+    final surface = context.surfaceColor;        // Màu surface
+    final onSurface = context.onSurfaceColor;    // Màu text trên surface
+    final isDark = context.isDarkMode;           // Check dark mode
+
+    // ── Cách 2: Dùng ColorScheme trực tiếp ──
+    final colorScheme = Theme.of(context).colorScheme;
+    final secondary = colorScheme.secondary;
+    final tertiary = colorScheme.tertiary;
+    final error = colorScheme.error;
+
+    // ── Cách 3: Dùng custom colors (ThemeExtension) ──
+    final appColors = context.appColors;
+    final textSecondary = appColors.textSecondary;   // Màu text phụ
+    final card = appColors.card;                      // Màu card
+    final divider = appColors.divider;                // Màu divider
+    final success = appColors.success;                // Màu thành công
+    final warning = appColors.warning;                // Màu cảnh báo
+    final info = appColors.info;                      // Màu thông tin
+
+    return const SizedBox();
+  }
+}
+
+// ┌─────────────────────────────────────────────────────────┐
+// │  2. CONTAINER VỚI MÀU KHÁC NHAU THEO DARK/LIGHT MODE   │
+// │     (CÂU HỎI CỦA BẠN)                                  │
+// └─────────────────────────────────────────────────────────┘
+
+class Example2_ContainerWithTheme extends StatelessWidget {
+  const Example2_ContainerWithTheme({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 200,
+      height: 200,
+      decoration: BoxDecoration(
+        // ✅ Tự động đổi màu theo theme!
+        // Light mode → #F5F5F5 (xám nhạt)
+        // Dark mode  → #1E1E1E (xám đậm)
+        color: context.surfaceColor,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Center(
+        child: Text(
+          'Hello',
+          // ✅ Text color cũng tự đổi theo theme
+          style: TextStyle(color: context.onSurfaceColor),
+        ),
+      ),
+    );
+  }
+}
+
+// ┌─────────────────────────────────────────────────────────┐
+// │  3. CÁC PATTERN PHỔ BIẾN                               │
+// └─────────────────────────────────────────────────────────┘
+
+class Example3_CommonPatterns extends StatelessWidget {
+  const Example3_CommonPatterns({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // ── Card với shadow tự động ──
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: context.appColors.card,      // Light: white, Dark: #1E1E1E
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: context.appColors.divider,  // Light: #E0E0E0, Dark: #2C2C2E
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Title',
+                style: context.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Subtitle text',
+                style: TextStyle(color: context.appColors.textSecondary),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // ── Status badge ──
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: context.appColors.success.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            'Active',
+            style: TextStyle(
+              color: context.appColors.success,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // ── Divider ──
+        Container(
+          height: 1,
+          color: context.appColors.divider,
+        ),
+
+        const SizedBox(height: 16),
+
+        // ── Primary button area ──
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: context.primaryColor,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            'Button',
+            style: TextStyle(color: context.colorScheme.onPrimary),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ┌─────────────────────────────────────────────────────────┐
+// │  4. TRUY CẬP TEXT STYLES                                │
+// └─────────────────────────────────────────────────────────┘
+
+class Example4_TextStyles extends StatelessWidget {
+  const Example4_TextStyles({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // Dùng extension
+        Text('Small text', style: context.bodySmall),
+        Text('Normal text', style: context.bodyMedium),
+        Text('Large text', style: context.bodyLarge),
+        Text('Headline', style: context.headlineLarge),
+
+        // Custom override
+        Text(
+          'Bold & Red',
+          style: context.bodyLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: context.primaryColor,
+          ),
+        ),
+
+        // Secondary text color
+        Text(
+          'Muted text',
+          style: context.bodyMedium?.copyWith(
+            color: context.appColors.textSecondary,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ┌─────────────────────────────────────────────────────────┐
+// │  5. BẢN ĐỒ MÀU — QUICK REFERENCE                      │
+// └─────────────────────────────────────────────────────────┘
+//
+// ┌──────────────────────────┬────────────────┬────────────────┐
+// │ Property                 │ Light Mode     │ Dark Mode      │
+// ├──────────────────────────┼────────────────┼────────────────┤
+// │ context.primaryColor     │ #D32F2F (đỏ)  │ #D32F2F (đỏ)  │
+// │ context.surfaceColor     │ #F5F5F5        │ #1E1E1E        │
+// │ context.onSurfaceColor   │ #1C1C1E        │ #F5F5F5        │
+// │ scaffoldBackground       │ #FFFFFF        │ #121212        │
+// ├──────────────────────────┼────────────────┼────────────────┤
+// │ appColors.textPrimary    │ #1C1C1E        │ #F5F5F5        │
+// │ appColors.textSecondary  │ #6E6E73        │ #AEAEB2        │
+// │ appColors.card           │ #FFFFFF        │ #1E1E1E        │
+// │ appColors.divider        │ #E0E0E0        │ #2C2C2E        │
+// │ appColors.success        │ #4CAF50        │ #4CAF50        │
+// │ appColors.warning        │ #FFA726        │ #FFA726        │
+// │ appColors.info           │ #2196F3        │ #2196F3        │
+// └──────────────────────────┴────────────────┴────────────────┘
+//
+// ┌─────────────────────────────────────────────────────────┐
+// │  6. QUY TẮC QUAN TRỌNG                                  │
+// └─────────────────────────────────────────────────────────┘
+//
+// ✅ LUÔN dùng Theme.of(context) hoặc context extensions
+// ✅ LUÔN dùng context.appColors cho custom colors
+// ✅ LUÔN dùng colorScheme.onPrimary cho text trên primary color
+//
+// ❌ KHÔNG import AppColors trực tiếp trong widget
+// ❌ KHÔNG hardcode màu (Colors.white, Color(0xFF...))
+// ❌ KHÔNG dùng if (isDark) để chọn màu — theme đã làm điều đó
+//
+// ── Ví dụ SAI ──
+// Container(color: Colors.white)                    // ❌ Hardcode
+// Container(color: AppColors.lightBackground)       // ❌ Import trực tiếp
+// Container(color: isDark ? Colors.black : white)   // ❌ Manual check
+//
+// ── Ví dụ ĐÚNG ──
+// Container(color: context.surfaceColor)            // ✅ Tự động theo theme
+// Container(color: context.appColors.card)          // ✅ Custom color
+// Container(color: context.colorScheme.primary)     // ✅ ColorScheme

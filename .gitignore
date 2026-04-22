@@ -1,0 +1,34 @@
+.DS_Store
+
+# ===== Secrets / Credentials (KHÔNG commit) =====
+# Vault chứa backup của tất cả file có credentials thật
+.secrets/
+
+# Supabase + app config (chứa URL, anon key)
+**/lib/config/app_config.dart
+
+# Firebase generated options (chứa API keys)
+**/lib/firebase_options.dart
+
+# Firebase native config files (chứa API keys, OAuth client IDs)
+**/google-services.json
+**/GoogleService-Info.plist
+**/firebase.json
+.firebaserc
+
+# Env files
+.env
+.env.*
+!.env.example
+
+# Android signing
+**/key.properties
+**/*.jks
+**/*.keystore
+
+# iOS certs / provisioning
+**/*.p12
+**/*.p8
+**/*.mobileprovision
+**/*.cer
+**/*.pem
