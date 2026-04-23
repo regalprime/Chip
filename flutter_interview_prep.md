@@ -40,6 +40,11 @@
 - [K. Tình huống thực tế](#k-tình-huống-thực-tế)
 - [L. Coding exercise](#l-coding-exercise)
 - [M. Câu mở rộng khó](#m-câu-mở-rộng-khó)
+- [N. Custom Widget](#n-custom-widget)
+- [O. Web Service & API (REST, JSON, Dio, Retrofit, SOAP/XML)](#o-web-service--api-rest-json-dio-retrofit-soapxml)
+- [P. SQL & SQLite](#p-sql--sqlite)
+- [Q. Git workflow](#q-git-workflow)
+- [R. MVP / MVC / MVVM](#r-mvp--mvc--mvvm)
 
 **[PHẦN 3 — CHIẾN LƯỢC PHỎNG VẤN](#phần-3--chiến-lược-phỏng-vấn)**
 
@@ -1062,6 +1067,818 @@ Những câu này thường hỏi senior (3-5 năm), mid-level biết thì ấn 
 - **M8.** `Ticker` vs `Timer` khác nhau thế nào?
 - **M9.** Build system Flutter: Dart → APK có bao nhiêu step?
 - **M10.** Khi nào có ý nghĩa viết app Flutter thuần (không plugin)?
+
+---
+
+## N. Custom Widget
+
+### N1. Khi nào nên tạo custom widget?
+- UI element lặp lại ≥ 3 lần → tách thành widget
+- Cần design system riêng (button, input, card)
+- Cần behavior không có sẵn trong framework
+
+### N2. 3 cách tạo custom widget (từ dễ → khó)
+
+**Cách 1 — Composition** (dùng nhất, 90% trường hợp):
+```dart
+class PrimaryButton extends StatelessWidget {
+  final String label;
+  final VoidCallback? onPressed;
+  final bool loading;
+  const PrimaryButton({
+    required this.label,
+    this.onPressed,
+    this.loading = false,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) => ElevatedButton(
+    style: ElevatedButton.styleFrom(
+      backgroundColor: Theme.of(context).primaryColor,
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      minimumSize: const Size(double.infinity, 48),
+    ),
+    onPressed: loading ? null : onPressed,
+    child: loading
+      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+      : Text(label),
+  );
+}
+```
+
+**Cách 2 — CustomPainter** (vẽ tự do: chart, progress ring, watermark):
+```dart
+class CircleProgressPainter extends CustomPainter {
+  final double progress; // 0.0 → 1.0
+  final Color color;
+  CircleProgressPainter({required this.progress, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = size.center(Offset.zero);
+    final radius = size.width / 2 - 4;
+
+    // vòng nền
+    canvas.drawCircle(center, radius, Paint()
+      ..color = color.withOpacity(0.2)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 8);
+
+    // vòng progress
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -pi / 2,                  // bắt đầu từ 12h
+      2 * pi * progress,        // quét theo progress
+      false,
+      Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 8
+        ..strokeCap = StrokeCap.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(CircleProgressPainter old) =>
+      old.progress != progress || old.color != color;
+}
+
+// Dùng:
+CustomPaint(
+  size: const Size(100, 100),
+  painter: CircleProgressPainter(progress: 0.7, color: Colors.blue),
+)
+```
+
+**Cách 3 — Custom RenderObject** (hiếm, chỉ khi cần layout đặc biệt như flow layout, waterfall):
+- Subclass `RenderBox` hoặc `MultiChildRenderObjectWidget`
+- Override `performLayout`, `paint`, `hitTest`
+- Interview hiếm hỏi sâu, biết concept là đủ
+
+### N3. Làm sao widget responsive theo kích thước màn hình?
+- **`LayoutBuilder`**: biết constraints từ parent
+- **`MediaQuery`**: biết kích thước màn hình + orientation
+- **`Flexible` / `Expanded`**: phân phối space trong Row/Column
+```dart
+LayoutBuilder(builder: (ctx, constraints) {
+  if (constraints.maxWidth > 600) return TabletLayout();
+  return MobileLayout();
+});
+```
+
+### N4. Best practice cho design system?
+- Centralize theme: `AppColors`, `AppTextStyles`, `AppSpacing`, `AppRadius`
+- Theme extension (Flutter 3+) cho color/size custom
+- Prefix convention: `DSButton`, `DSTextField`, `DSCard` (DS = Design System)
+- Mỗi component nhận prop rõ ràng, không phụ thuộc BuildContext cho logic
+
+### N5. Animation trong custom widget?
+- **Implicit animation** (dễ): `AnimatedContainer`, `AnimatedOpacity`, `TweenAnimationBuilder`
+- **Explicit animation** (control rõ): `AnimationController` + `AnimatedBuilder`
+- **Hero** cho transition giữa screen (shared element)
+```dart
+class FadeBox extends StatefulWidget {...}
+
+class _FadeBoxState extends State<FadeBox> with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 400),
+  )..forward();
+
+  @override
+  Widget build(BuildContext context) => FadeTransition(
+    opacity: _c,
+    child: const Text('Hello'),
+  );
+
+  @override
+  void dispose() { _c.dispose(); super.dispose(); }
+}
+```
+
+### N6. `SingleTickerProviderStateMixin` vs `TickerProviderStateMixin`?
+- Single: 1 AnimationController
+- Multi: nhiều AnimationController — tốn resource hơn một chút, chỉ dùng khi cần
+
+---
+
+## O. Web Service & API (REST, JSON, Dio, Retrofit, SOAP/XML)
+
+### O1. REST API — nguyên tắc cốt lõi
+- **Stateless**: mỗi request tự đủ, server không nhớ client
+- **Resource-based**: URL là danh từ (`/users/1` không phải `/getUser?id=1`)
+- **HTTP verbs**: GET (đọc), POST (tạo), PUT (replace toàn bộ), PATCH (update 1 phần), DELETE
+- **Status code**: 2xx OK, 3xx redirect, 4xx client error, 5xx server error
+
+**Status code hay hỏi:**
+| Code | Ý nghĩa |
+|---|---|
+| 200 | OK |
+| 201 | Created |
+| 204 | No Content (DELETE thành công) |
+| 400 | Bad Request (sai format) |
+| 401 | Unauthorized (chưa login / token sai) |
+| 403 | Forbidden (đã login nhưng không có quyền) |
+| 404 | Not Found |
+| 409 | Conflict (vd: email đã tồn tại) |
+| 422 | Unprocessable (validation fail) |
+| 500 | Internal Server Error |
+| 503 | Service Unavailable |
+
+### O2. Parse JSON — 2 cách
+
+**Manual** (dự án nhỏ):
+```dart
+class User {
+  final int id;
+  final String name;
+  final String? avatar;
+  User({required this.id, required this.name, this.avatar});
+
+  factory User.fromJson(Map<String, dynamic> json) => User(
+    id: json['id'] as int,
+    name: json['name'] as String,
+    avatar: json['avatar'] as String?,
+  );
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    if (avatar != null) 'avatar': avatar,
+  };
+}
+```
+
+**json_serializable** (dự án lớn, dùng code generation):
+```dart
+@JsonSerializable()
+class User {
+  final int id;
+  final String name;
+  @JsonKey(defaultValue: null) final String? avatar;
+
+  User({required this.id, required this.name, this.avatar});
+  factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
+  Map<String, dynamic> toJson() => _$UserToJson(this);
+}
+```
+Chạy `dart run build_runner build` để generate file `.g.dart`.
+
+**Bẫy hay gặp:**
+- API trả `null` cho field expect non-null → crash. Luôn dùng `?` nếu không chắc
+- Field `int` có thể là `double` đôi khi → dùng `num` rồi cast
+- Nested list: `List<Item>.from(json['items'].map((e) => Item.fromJson(e)))`
+
+### O3. Dio vs http package?
+
+| | `http` | `dio` |
+|---|---|---|
+| Basic request | ✅ | ✅ |
+| Interceptor | ❌ | ✅ |
+| Cancel request | ❌ | ✅ |
+| Progress upload/download | ❌ | ✅ |
+| FormData / multipart | Khó | ✅ |
+| Transform request/response | ❌ | ✅ |
+| Timeout config | Manual | Built-in |
+
+**Trả lời phỏng vấn**: *"Project production em dùng Dio vì có interceptor (auth + logging + retry), support cancel request khi navigate, multipart upload file tiện. http chỉ đủ cho demo."*
+
+### O4. Dio setup production-ready
+```dart
+final dio = Dio(BaseOptions(
+  baseUrl: 'https://api.example.com/v1',
+  connectTimeout: const Duration(seconds: 10),
+  receiveTimeout: const Duration(seconds: 15),
+  headers: {'Content-Type': 'application/json'},
+));
+
+dio.interceptors.addAll([
+  // Auth — gắn token mọi request
+  InterceptorsWrapper(
+    onRequest: (options, handler) async {
+      final token = await secureStorage.read(key: 'access_token');
+      if (token != null) options.headers['Authorization'] = 'Bearer $token';
+      handler.next(options);
+    },
+    onError: (error, handler) async {
+      // 401 → refresh token → retry
+      if (error.response?.statusCode == 401) {
+        final newToken = await refreshToken();
+        if (newToken != null) {
+          error.requestOptions.headers['Authorization'] = 'Bearer $newToken';
+          final retry = await dio.fetch(error.requestOptions);
+          return handler.resolve(retry);
+        }
+      }
+      handler.next(error);
+    },
+  ),
+  // Logging (chỉ debug)
+  if (kDebugMode) LogInterceptor(requestBody: true, responseBody: true),
+]);
+```
+
+### O5. Retrofit là gì?
+Package generate code API client từ annotation (giống Retrofit Android). Dùng Dio bên dưới.
+
+```dart
+@RestApi(baseUrl: 'https://api.example.com/v1')
+abstract class UserApi {
+  factory UserApi(Dio dio) = _UserApi;
+
+  @GET('/users/{id}')
+  Future<User> getUser(@Path('id') int id);
+
+  @GET('/users')
+  Future<List<User>> listUsers(@Query('page') int page);
+
+  @POST('/users')
+  Future<User> createUser(@Body() User user);
+
+  @MultiPart()
+  @POST('/users/{id}/avatar')
+  Future<String> uploadAvatar(
+    @Path('id') int id,
+    @Part() File file,
+  );
+}
+```
+Chạy build_runner → tự generate class `_UserApi`.
+
+**Lợi**: type-safe, ít boilerplate, dễ read.
+**Hại**: thêm bước codegen, phải chạy lại khi đổi API.
+
+### O6. SOAP/XML xử lý thế nào?
+Hiếm dùng trong mobile hiện đại — thường là legacy backend (banking, telecom).
+
+```dart
+// POST XML envelope
+final envelope = '''<?xml version="1.0"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <GetUser xmlns="http://example.com/">
+      <id>42</id>
+    </GetUser>
+  </soap:Body>
+</soap:Envelope>''';
+
+final response = await dio.post(
+  'https://legacy.example.com/service.asmx',
+  data: envelope,
+  options: Options(headers: {'Content-Type': 'text/xml; charset=utf-8'}),
+);
+
+// Parse bằng package `xml`
+import 'package:xml/xml.dart';
+final doc = XmlDocument.parse(response.data);
+final name = doc.findAllElements('Name').first.innerText;
+```
+
+**Interview tip**: *"Em chưa dùng nhiều SOAP vì backend em làm đều REST. Nhưng em biết concept là XML-based RPC, response envelope format, parse bằng package `xml` là được."*
+
+### O7. Xử lý error network thế nào?
+```dart
+Future<Result<User>> fetchUser(int id) async {
+  try {
+    final user = await api.getUser(id);
+    return Result.success(user);
+  } on DioException catch (e) {
+    return Result.failure(_mapDioError(e));
+  } catch (_) {
+    return Result.failure(Failure.unknown());
+  }
+}
+
+Failure _mapDioError(DioException e) => switch (e.type) {
+  DioExceptionType.connectionTimeout ||
+  DioExceptionType.receiveTimeout => Failure.timeout(),
+  DioExceptionType.connectionError => Failure.noInternet(),
+  DioExceptionType.badResponse => switch (e.response?.statusCode) {
+    401 => Failure.unauthorized(),
+    404 => Failure.notFound(),
+    _ => Failure.server(e.response?.data?['message']),
+  },
+  DioExceptionType.cancel => Failure.cancelled(),
+  _ => Failure.unknown(),
+};
+```
+
+### O8. Cancel request khi user rời màn hình?
+```dart
+class _ProductPageState extends State<ProductPage> {
+  final _cancelToken = CancelToken();
+
+  @override
+  void initState() {
+    super.initState();
+    api.getProduct(widget.id, cancelToken: _cancelToken);
+  }
+
+  @override
+  void dispose() {
+    _cancelToken.cancel('User left page');
+    super.dispose();
+  }
+}
+```
+
+### O9. Upload progress?
+```dart
+await dio.post(
+  '/upload',
+  data: FormData.fromMap({'file': await MultipartFile.fromFile(path)}),
+  onSendProgress: (sent, total) {
+    final percent = (sent / total * 100).toStringAsFixed(1);
+    setState(() => _progress = percent);
+  },
+);
+```
+
+---
+
+## P. SQL & SQLite
+
+### P1. Local DB trong Flutter dùng gì?
+| Package | Loại | Dùng khi |
+|---|---|---|
+| `sqflite` | Raw SQL | Dự án nhỏ, cần full control |
+| `drift` (moor) | ORM + type-safe + reactive | Dự án vừa/lớn, muốn compile-time safety |
+| `floor` | ORM theo kiểu Android Room | Team từ Android quen Room |
+| `isar` | NoSQL, rất nhanh | Dự án cần performance cao, no-SQL |
+| `hive` | Key-value, đơn giản | Cache đơn giản, settings |
+| `shared_preferences` | Key-value nhỏ | Chỉ config đơn giản (bool, string ngắn) |
+
+### P2. Setup sqflite cơ bản
+```dart
+Future<Database> _openDb() async {
+  final path = join(await getDatabasesPath(), 'app.db');
+  return openDatabase(
+    path,
+    version: 1,
+    onCreate: (db, version) async {
+      await db.execute('''
+        CREATE TABLE expenses (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          amount REAL NOT NULL,
+          category TEXT NOT NULL,
+          date INTEGER NOT NULL,
+          note TEXT
+        )
+      ''');
+      await db.execute('CREATE INDEX idx_expenses_date ON expenses(date DESC)');
+    },
+    onUpgrade: (db, oldV, newV) async {
+      if (oldV < 2) await db.execute('ALTER TABLE expenses ADD COLUMN tags TEXT');
+    },
+  );
+}
+```
+
+### P3. SQL cơ bản cần thuộc
+
+**CRUD:**
+```sql
+-- CREATE
+INSERT INTO expenses (amount, category, date) VALUES (100.5, 'food', 1714000000);
+
+-- READ
+SELECT * FROM expenses WHERE category = 'food' ORDER BY date DESC LIMIT 10 OFFSET 0;
+
+-- UPDATE
+UPDATE expenses SET amount = 150 WHERE id = 1;
+
+-- DELETE
+DELETE FROM expenses WHERE date < 1700000000;
+```
+
+**JOIN** (khi có nhiều table):
+```sql
+SELECT e.id, e.amount, c.name AS category_name
+FROM expenses e
+INNER JOIN categories c ON e.category_id = c.id
+WHERE e.date BETWEEN ? AND ?;
+```
+- **INNER JOIN**: chỉ lấy row có match ở cả 2 table
+- **LEFT JOIN**: lấy toàn bộ table trái + match phải (null nếu không có)
+- **RIGHT JOIN** / **FULL OUTER JOIN**: ngược lại / cả 2
+
+**Aggregation:**
+```sql
+SELECT category, SUM(amount) AS total, COUNT(*) AS count
+FROM expenses
+WHERE date > ?
+GROUP BY category
+HAVING total > 100
+ORDER BY total DESC;
+```
+
+### P4. Index — khi nào cần, khi nào KHÔNG?
+**Dùng**: cột hay filter/sort (`WHERE`, `ORDER BY`, `JOIN ON`). Ví dụ: `date`, `user_id`, `category`.
+
+**KHÔNG dùng**:
+- Table nhỏ (<1000 row) — không đáng
+- Cột ít unique (vd: `is_deleted BOOLEAN`)
+- Mọi cột — làm chậm INSERT/UPDATE, tốn space
+
+```sql
+CREATE INDEX idx_expenses_user_date ON expenses(user_id, date DESC);
+-- Composite index: tối ưu query WHERE user_id=? ORDER BY date DESC
+```
+
+**Lưu ý thứ tự composite index**: cột equality trước, range/sort sau.
+
+### P5. Transaction — đảm bảo atomic
+```dart
+await db.transaction((txn) async {
+  final orderId = await txn.insert('orders', {'total': 500});
+  for (final item in items) {
+    await txn.insert('order_items', {
+      'order_id': orderId,
+      'product_id': item.id,
+      'quantity': item.qty,
+    });
+  }
+  // Nếu có lỗi bất kỳ → rollback tất cả, orders + order_items đều không tạo
+});
+```
+
+### P6. Migration khi đổi schema?
+```dart
+openDatabase(
+  path,
+  version: 3,  // bump version
+  onUpgrade: (db, oldVersion, newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute('ALTER TABLE expenses ADD COLUMN note TEXT');
+    }
+    if (oldVersion < 3) {
+      await db.execute('CREATE TABLE tags (id INTEGER PRIMARY KEY, name TEXT)');
+    }
+  },
+);
+```
+**SQLite hạn chế**: không `DROP COLUMN` trực tiếp (phải recreate table + copy data).
+
+### P7. Normalization — 1NF, 2NF, 3NF
+- **1NF**: mỗi cell 1 giá trị nguyên tử (không `tags: "red,blue,green"` — phải tách table)
+- **2NF**: 1NF + không partial dependency (không cột phụ thuộc 1 phần composite key)
+- **3NF**: 2NF + không transitive dependency (không cột phụ thuộc cột non-key khác)
+
+**Khi nào denormalize (chấp nhận duplicate)?**
+- Read nhiều hơn write rất nhiều
+- Cần performance query cao (tránh JOIN)
+- Data analytics / reporting
+
+**Trả lời interview**: *"Em normalize tới 3NF cho data core, nhưng denormalize (vd: cache `user_name` vào bảng `post`) cho case read-heavy để tránh JOIN mỗi lần load feed."*
+
+### P8. Query chậm → tối ưu?
+1. `EXPLAIN QUERY PLAN SELECT ...` xem SQLite làm gì
+2. Add index vào cột filter/sort
+3. Tránh `SELECT *` — chỉ lấy cột cần
+4. Pagination: `LIMIT / OFFSET` cho page nhỏ, **keyset pagination** cho lớn:
+   ```sql
+   -- Thay vì OFFSET 10000 (chậm)
+   SELECT * FROM posts WHERE id < ? ORDER BY id DESC LIMIT 20;
+   ```
+5. Dùng `IN (?, ?, ?)` thay cho nhiều query riêng
+
+### P9. SQL injection — có xảy ra trong Flutter không?
+**Có** nếu viết raw query concat string:
+```dart
+// ❌ CỰC KỲ NGUY HIỂM
+db.rawQuery("SELECT * FROM users WHERE name = '$userInput'");
+
+// ✅ ĐÚNG: dùng placeholder
+db.rawQuery("SELECT * FROM users WHERE name = ?", [userInput]);
+// Hoặc
+db.query('users', where: 'name = ?', whereArgs: [userInput]);
+```
+
+### P10. SQLite vs SharedPreferences vs Hive — chọn cái nào?
+- **SharedPreferences**: <10 key-value đơn giản (dark mode, language)
+- **Hive**: object nhỏ cache, không query phức tạp
+- **Isar**: object nhiều, query phức tạp, **cần tốc độ**
+- **SQLite**: dữ liệu quan hệ, JOIN, aggregate, query SQL
+
+---
+
+## Q. Git workflow
+
+### Q1. Flow cơ bản hàng ngày
+```bash
+git clone <url>
+git checkout -b feature/login
+# ... sửa code
+git add src/login_page.dart
+git commit -m "feat(auth): add login screen with email validation"
+git push -u origin feature/login
+# Tạo PR trên GitHub → reviewer xem → merge
+```
+
+### Q2. Merge vs Rebase
+
+| | Merge | Rebase |
+|---|---|---|
+| History | Giữ nguyên, có commit merge | Linear, viết lại history |
+| An toàn | An toàn | Nguy hiểm nếu branch đã share |
+| Dùng khi | Integrate feature vào main | Update feature branch với main mới nhất |
+
+**Rule phổ biến**: *"Rebase branch riêng của mình trước khi push. Merge khi tích hợp vào shared branch (main/develop)."*
+
+```bash
+# Rebase feature branch với master
+git checkout feature/login
+git fetch origin
+git rebase origin/master
+# Fix conflict nếu có → git add → git rebase --continue
+git push --force-with-lease  # safer than --force
+```
+
+### Q3. Conflict — xử lý thế nào?
+```bash
+git pull origin master   # hoặc git rebase
+# File có conflict sẽ có marker:
+#   <<<<<<< HEAD
+#   code của mình
+#   =======
+#   code từ branch kia
+#   >>>>>>> origin/master
+# Sửa file, giữ phần đúng, xóa marker
+git add <file>
+git commit                # nếu đang merge
+git rebase --continue     # nếu đang rebase
+```
+**Tip**: dùng VS Code / IDE có UI để resolve conflict dễ hơn.
+
+### Q4. Branching strategy phổ biến
+
+**Git Flow** (formal, phù hợp release theo version):
+```
+main ← release/* ← develop ← feature/*
+       hotfix/* → main + develop
+```
+
+**GitHub Flow** (đơn giản, CI/CD continuous):
+```
+main ← feature/*
+```
+Mỗi PR = deploy được ngay. Phù hợp web app, SaaS.
+
+**Trunk-based** (Google, Facebook):
+- Chỉ main branch, dùng feature flag ẩn feature chưa sẵn sàng
+- Commit trực tiếp lên main, không có long-lived branch
+- Yêu cầu test tự động cực tốt
+
+**Trả lời interview**: *"Team em dùng GitHub Flow vì release liên tục. Git Flow hợp cho mobile app release theo version, còn Trunk-based cần infrastructure test rất mạnh."*
+
+### Q5. Lệnh Git ít dùng nhưng hay bị hỏi
+
+| Lệnh | Dùng khi |
+|---|---|
+| `git stash` / `git stash pop` | Tạm lưu working changes để checkout branch khác |
+| `git cherry-pick <sha>` | Lấy 1 commit từ branch khác (hotfix) |
+| `git reset --soft HEAD~1` | Hoàn tác commit cuối, giữ changes staged |
+| `git reset --hard HEAD~1` | Hoàn tác commit + xóa changes (⚠️ mất work) |
+| `git revert <sha>` | Tạo commit mới để undo (an toàn cho shared branch) |
+| `git reflog` | Xem mọi HEAD movement — cứu khi lỡ reset --hard |
+| `git log --graph --oneline --all` | Xem history dạng đồ thị |
+| `git blame <file>` | Xem ai sửa dòng nào, commit nào |
+| `git bisect` | Binary search để tìm commit gây bug |
+
+### Q6. Commit message convention
+**Conventional Commits** (phổ biến nhất):
+```
+feat(auth): add biometric login
+fix(payment): prevent double charge on retry
+refactor(home): extract ProductCard widget
+docs(readme): update setup guide
+test(bloc): add login bloc test
+chore(deps): bump dio to 5.4.0
+```
+Type: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `perf`, `ci`, `build`.
+
+### Q7. `.gitignore` — quan trọng với Flutter
+```gitignore
+# Dart/Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+**/ios/Flutter/.last_build_id
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets (QUAN TRỌNG)
+**/google-services.json
+**/GoogleService-Info.plist
+**/firebase_options.dart
+**/.env
+**/key.properties
+**/*.jks
+**/*.keystore
+```
+
+### Q8. Lỡ commit secret → xử lý?
+**Chưa push**:
+```bash
+git reset --soft HEAD~1   # bỏ commit, giữ changes
+# Thêm file vào .gitignore
+# Commit lại
+```
+
+**Đã push** (nghiêm trọng):
+```bash
+# Cách 1: git filter-repo (khuyến nghị)
+git filter-repo --invert-paths --path development/lib/config/app_config.dart
+git push --force
+
+# Cách 2: BFG Repo-Cleaner (dễ dùng)
+bfg --delete-files app_config.dart
+```
+**Quan trọng**: rotate secret ngay — coi như đã lộ, kể cả khi đã xóa khỏi history.
+
+### Q9. Pull Request / Code Review workflow
+1. Tạo feature branch từ main
+2. Commit nhỏ, message rõ ràng
+3. Push + tạo PR với description đầy đủ (mục đích, screenshot, test plan)
+4. CI chạy lint + test → đợi pass
+5. Reviewer comment → sửa theo feedback → push update
+6. Approve → **squash merge** (prefer) cho clean history
+7. Delete branch sau merge
+
+### Q10. Tag + release?
+```bash
+git tag -a v1.2.3 -m "Release 1.2.3: add biometric login"
+git push origin v1.2.3
+# GitHub tự tạo release page từ tag
+```
+
+---
+
+## R. MVP / MVC / MVVM
+
+### R1. MVP (Model-View-Presenter) là gì?
+Pattern tách UI và logic:
+- **Model**: data + business rules
+- **View**: UI dumb, chỉ hiển thị + forward user event
+- **Presenter**: nhận event từ View → gọi Model → update View qua interface
+
+```dart
+// View interface
+abstract class LoginView {
+  void showLoading();
+  void showSuccess(User user);
+  void showError(String message);
+}
+
+// Presenter
+class LoginPresenter {
+  final LoginView view;
+  final AuthRepository repo;
+  LoginPresenter(this.view, this.repo);
+
+  Future<void> login(String email, String password) async {
+    view.showLoading();
+    try {
+      final user = await repo.signIn(email, password);
+      view.showSuccess(user);
+    } catch (e) {
+      view.showError(e.toString());
+    }
+  }
+}
+
+// View (implement interface)
+class LoginPage extends StatefulWidget { ... }
+class _LoginPageState extends State<LoginPage> implements LoginView {
+  late final _presenter = LoginPresenter(this, getIt<AuthRepository>());
+
+  @override
+  void showLoading() => setState(() => _loading = true);
+
+  @override
+  void showSuccess(User user) => Navigator.pushReplacement(...);
+
+  @override
+  void showError(String msg) => ScaffoldMessenger.of(context).showSnackBar(...);
+}
+```
+
+### R2. MVC vs MVP vs MVVM
+
+| | Communication | Testable | Flutter fit |
+|---|---|---|---|
+| **MVC** | View ↔ Controller ↔ Model (cả 2 chiều) | Khó | Ít dùng |
+| **MVP** | View → Presenter → Model; Presenter update View qua interface | Tốt | Android era |
+| **MVVM** | View bind ViewModel qua observable (stream/listener) | Rất tốt | **Hợp Flutter** |
+
+### R3. MVVM trong Flutter trông thế nào?
+Riverpod/Provider/ChangeNotifier là implementation của MVVM:
+
+```dart
+// ViewModel
+class LoginViewModel extends ChangeNotifier {
+  final AuthRepository _repo;
+  LoginViewModel(this._repo);
+
+  bool loading = false;
+  String? error;
+  User? user;
+
+  Future<void> login(String email, String password) async {
+    loading = true; notifyListeners();
+    try {
+      user = await _repo.signIn(email, password);
+      error = null;
+    } catch (e) {
+      error = e.toString();
+    } finally {
+      loading = false; notifyListeners();
+    }
+  }
+}
+
+// View tự động bind qua Consumer
+Consumer<LoginViewModel>(
+  builder: (_, vm, __) => vm.loading
+    ? CircularProgressIndicator()
+    : LoginForm(onSubmit: vm.login),
+)
+```
+
+### R4. Bloc vs MVP vs MVVM — chọn gì?
+
+- **Bloc**: variant của MVVM, giao tiếp qua Stream Event/State
+- **MVVM**: giao tiếp qua observable (ChangeNotifier, Riverpod)
+- **MVP**: giao tiếp qua interface callback — **cũ nhất, verbose nhất**
+
+**Ưu thế của Bloc/MVVM trong Flutter**:
+- Declarative, hợp với `StreamBuilder`/`ConsumerWidget`
+- View không cần implement interface — cleaner
+- Dễ test vì state là stream/object
+
+**Khi nào MVP còn ý nghĩa?**
+- Team chuyển từ Android sang, đã quen MVP
+- Project legacy code Android, port Flutter
+- App simple, không cần state management phức tạp
+
+### R5. Trả lời phỏng vấn tổng hợp
+> *"MVP/MVC là pattern truyền thống tách UI và logic, nhưng trong Flutter hiện đại thường dùng biến thể MVVM qua Bloc hoặc Riverpod vì:
+> (1) Bind View ↔ ViewModel tự nhiên với declarative UI của Flutter,
+> (2) Không cần View implement interface như MVP,
+> (3) State là stream/object dễ test.
+> Em dùng Bloc cho project chính, biết cách implement MVP nếu team cần convert code từ Android."*
+
+### R6. Dependency Inversion trong các pattern này
+Điểm chung: **View/Presenter/ViewModel không depend vào implementation**, chỉ depend vào abstraction (interface Repository). Xem lại [Phần 1 #15 — SOLID](#15-solid).
 
 ---
 ---
