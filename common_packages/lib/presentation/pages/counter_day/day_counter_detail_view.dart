@@ -13,7 +13,21 @@ class DayCounterDetailView extends StatelessWidget {
   final DayCounterEntity counter;
 
   static const _milestoneTargets = [
-    7, 30, 50, 100, 200, 365, 500, 730, 1000, 1095, 1500, 2000, 2555, 3650,
+    7,
+    30,
+    50,
+    100,
+    200,
+    300,
+    365,
+    500,
+    730,
+    1000,
+    1095,
+    1500,
+    2000,
+    2555,
+    3650,
   ];
 
   List<DayMilestone> _buildMilestones(int daysDiff) {
@@ -85,7 +99,8 @@ class DayCounterDetailView extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           // Emoji
-                          Text(counter.emoji, style: const TextStyle(fontSize: 56)),
+                          Text(counter.emoji,
+                              style: const TextStyle(fontSize: 56)),
                           const SizedBox(height: 12),
 
                           // Title
@@ -159,7 +174,8 @@ class DayCounterDetailView extends StatelessWidget {
                     // Milestones
                     Text(
                       'Cot moc',
-                      style: theme.textTheme.headlineLarge?.copyWith(fontSize: 18),
+                      style:
+                          theme.textTheme.headlineLarge?.copyWith(fontSize: 18),
                     ),
                     const SizedBox(height: 12),
                     ...milestones.map((m) => _MilestoneRow(
@@ -432,6 +448,7 @@ class _MilestoneRow extends StatelessWidget {
     if (days == 50) return '50 ngay';
     if (days == 100) return '100 ngay';
     if (days == 200) return '200 ngay';
+    if (days == 300) return '300 ngay';
     if (days == 365) return '1 nam';
     if (days == 500) return '500 ngay';
     if (days == 730) return '2 nam';
@@ -457,12 +474,11 @@ class _MilestoneRow extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: isReached
-              ? color.withOpacity(0.08)
-              : context.appColors.card,
+          color: isReached ? color.withOpacity(0.08) : context.appColors.card,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isReached ? color.withOpacity(0.3) : context.appColors.divider,
+            color:
+                isReached ? color.withOpacity(0.3) : context.appColors.divider,
           ),
         ),
         child: Column(
@@ -512,7 +528,9 @@ class _MilestoneRow extends StatelessWidget {
                 Text(
                   isReached ? 'Da dat' : '${(progress * 100).toInt()}%',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: isReached ? color : theme.colorScheme.onSurface.withOpacity(0.5),
+                    color: isReached
+                        ? color
+                        : theme.colorScheme.onSurface.withOpacity(0.5),
                     fontWeight: FontWeight.w600,
                   ),
                 ),

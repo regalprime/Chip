@@ -3,7 +3,7 @@ description: Development app
 publish_to: 'none'
 
 environment:
-  sdk: ^3.7.0
+  sdk: ">=3.6.0 <4.0.0"
   flutter: ">=3.0.0"
 
 dependencies:
@@ -11,11 +11,11 @@ dependencies:
     sdk: flutter
   common_packages:
     path: ../common_packages
-  firebase_core: ^3.15.1
+  firebase_core: ^3.15.2
   get_it: ^8.2.0
   supabase_flutter: ^2.10.1
   flutter_bloc: ^9.1.1
-  image_picker: ^1.2.1
+  image_picker: ^1.2.0
   phosphor_flutter: ^2.1.0
 
 
@@ -25,6 +25,7 @@ dev_dependencies:
   flutter_lints: ^5.0.0
 
 flutter:
+  generate: true
   uses-material-design: true
   assets:
     - assets/font/

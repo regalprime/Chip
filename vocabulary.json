@@ -1,0 +1,87 @@
+{
+  "version": 1,
+  "updated_at": "2026-05-08T13:00:00Z",
+  "vocabularies": [
+    {
+      "id": "voc_0001",
+      "word": "verbose",
+      "ipa": {
+        "uk": "/vɜːˈbəʊs/",
+        "us": "/vɝːˈboʊs/"
+      },
+      "part_of_speech": "adj",
+      "level": "B2",
+      "meanings": [
+        {
+          "lang": "vi",
+          "text": "dài dòng"
+        }
+      ],
+      "examples": [
+        {
+          "lang": "en",
+          "text": "He gave a verbose explanation."
+        },
+        {
+          "lang": "vi",
+          "text": "Anh ấy đưa ra một lời giải thích dài dòng."
+        }
+      ],
+      "synonyms": [
+        "wordy"
+      ],
+      "antonyms": [
+        "concise"
+      ],
+      "tags": [
+        "communication"
+      ],
+      "is_favorite": false,
+      "is_learned": false,
+      "created_at": "2026-05-08T13:00:00Z",
+      "updated_at": "2026-05-08T13:00:00Z"
+    },
+
+    {
+      "id": "voc_0002",
+      "word": "consistency",
+      "ipa": {
+        "uk": "/kənˈsɪs.tən.si/",
+        "us": "/kənˈsɪs.tən.si/"
+      },
+      "part_of_speech": "noun",
+      "level": "B2",
+      "meanings": [
+        {
+          "lang": "vi",
+          "text": "tính nhất quán"
+        }
+      ],
+      "examples": [
+        {
+          "lang": "en",
+          "text": "Consistency is important in software architecture."
+        },
+        {
+          "lang": "vi",
+          "text": "Tính nhất quán rất quan trọng trong kiến trúc phần mềm."
+        }
+      ],
+      "synonyms": [
+        "uniformity",
+        "stability"
+      ],
+      "antonyms": [
+        "inconsistency"
+      ],
+      "tags": [
+        "software",
+        "architecture"
+      ],
+      "is_favorite": false,
+      "is_learned": false,
+      "created_at": "2026-05-08T13:00:00Z",
+      "updated_at": "2026-05-08T13:00:00Z"
+    }
+  ]
+}

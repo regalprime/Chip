@@ -16,6 +16,7 @@ import 'package:common_packages/presentation/pages/tools/tools_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -127,21 +128,22 @@ class _HomeScreenState extends State<HomeScreen> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: _onTabChanged,
-        destinations: const [
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
+        destinations:  [
           NavigationDestination(
-            icon: Icon(HugeIcons.strokeRoundedHome02),
+            icon: Icon(PhosphorIconsRegular.house),
             label: 'Home',
           ),
           NavigationDestination(
-            icon: Icon(HugeIcons.strokeRoundedDashboardSquare01),
+            icon: Icon(PhosphorIconsRegular.squaresFour),
             label: 'Cong cu',
           ),
           NavigationDestination(
-            icon: Icon(HugeIcons.strokeRoundedUserGroup),
+            icon: Icon(PhosphorIconsRegular.users),
             label: 'Ban be',
           ),
           NavigationDestination(
-            icon: Icon(HugeIcons.strokeRoundedSetting06),
+            icon: Icon(PhosphorIconsRegular.gearSix),
             label: 'Cai dat',
           ),
         ],
